@@ -1,0 +1,58 @@
+version: '3'
+services:
+  backend:
+    container_name: backend
+    build:
+      context: ./app-backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8000:8000"
+    networks:
+      - app
+    environment:
+      DB_HOST: db
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./app-backend:/app/backend
+    depends_on:
+      - db
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./app-frontend
+      dockerfile: Dockerfile
+    networks:
+      - app
+    tty: true
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./app-frontend:/app/frontend
+    depends_on:
+       - backend
+
+  db:
+    platform: linux/x86_64
+    image: mysql:8.0.28
+    container_name: db
+    restart: always
+    volumes:
+      - ./db_data:/var/lib/mysql
+    networks:
+      - app
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+    - "3306:3306"
+
+networks:
+  app:
+    driver: bridge
